@@ -136,6 +136,10 @@ def createISCEXML(g1,g2,f1,f2,options):
                     c.text = f1
                 if c.attrib['name'] == 'swath':
                     c.text = options['mswath'] 
+            if options['roi']==True:
+                roi = etree.Element('property',name='region of interest')
+                roi.text = '[%s %s %s %s]' % (options['south'],options['north'],options['west'],options['east'])
+                comp.append(roi)
         if comp.attrib['name'] == 'slave':
             for c in comp.findall('property'):
                 if c.attrib['name'] == 'safe':
@@ -144,12 +148,16 @@ def createISCEXML(g1,g2,f1,f2,options):
                     c.text = f2
                 if c.attrib['name'] == 'swath':
                     c.text = options['sswath'] 
+            if options['roi']==True:
+                roi = etree.Element('property',name='region of interest')
+                roi.text = '[%s %s %s %s]' % (options['south'],options['north'],options['west'],options['east'])
+                comp.append(roi)
 
     outfile = '%s/%s/%s' % (options['bname'],options['ss'],'topsApp.xml')
     print(outfile)
     of = open(outfile,'wb')
     of.write(b'<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n')
-    root.write(of)
+    root.write(of,pretty_print=True)
     of.close()
 
 def usage():
@@ -172,6 +180,7 @@ def usage():
 # options is the main dictionary
 options = {}
 options['unwrap'] = False
+options['roi'] = False
 
 if len(sys.argv) == 1:
     usage()
@@ -184,6 +193,7 @@ while i<len(sys.argv)-2:
         options['unwrap']==True
     elif sys.argv[i] == '-roi':
         # region of interest.  Defined S/N/W/E
+        options['roi'] = True
         options['south'] = sys.argv[i+1]
         options['north'] = sys.argv[i+2]
         options['west'] = sys.argv[i+3]
@@ -218,7 +228,7 @@ def isceCalibration(bname,ss):
 def isceProcess(bname,ss,step):
     cmd = 'cd %s/%s ;' % (bname,ss)
     cmd = cmd + 'topsApp.py %s' % step
-    print cmd
+    print(cmd)
     os.system(cmd)
 
 # g1 and g2 are the two granules that we are processing
@@ -254,10 +264,12 @@ cmd = 'cd %s/%s; wget %s' % (bname,ss,orburl)
 # Make sure ISCE is available
 t = os.system('which topsApp.py')
 if t != 0:
-    sys.exit('ISCE binaries to not appear to be in your path.')
+    sys.exit('ISCE binaries do not appear to be in your path.')
 
 createISCEXML(g1,g2,f1,f2,options)
 
+
+sys.exit()
 # Process through preprocess
 iscePreProcess(bname,ss)
 

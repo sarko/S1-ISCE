@@ -120,7 +120,7 @@ def prepDirISCE(bname,ss):
 def createISCEXML(g1,g2,f1,f2,options):
     # Location of template file.  This needs to be updated if you have template 
     # in another location
-    template = '/home/sarko/arkobin/isceTemplate.xml'
+    template = '/home/sarko/arkobin/procS1ISCE/isceTemplate.xml'
     root = etree.parse(template)
 
     comp = root.find('component')
@@ -215,8 +215,11 @@ def iscePreProcess(bname,ss):
 def isceCalibration(bname,ss):
     pass
 
-def isceProcess(bname,ss):
-    pass
+def isceProcess(bname,ss,step):
+    cmd = 'cd %s/%s ;' % (bname,ss)
+    cmd = cmd + 'topsApp.py %s' % step
+    print cmd
+    os.system(cmd)
 
 # g1 and g2 are the two granules that we are processing
 g1 = sys.argv[-2]
@@ -254,6 +257,22 @@ if t != 0:
     sys.exit('ISCE binaries to not appear to be in your path.')
 
 createISCEXML(g1,g2,f1,f2,options)
+
+# Process through preprocess
 iscePreProcess(bname,ss)
+
+# This routine will calibrate the SLCs (eventually)
+isceCalibration(bname,ss)
+
+# Process through filter
+isceProcess(bname,ss,'--start=computeBaselines --end=filter')
+
+# Unwrap if requested
+if options['unwrap']==True:
+    isceProcess(bname,ss,' --dostep=unwrap')
+
+# do final geocode
+step = ' --dostep=geocode'
+isceProcess(bname,ss,step)
 
 

@@ -44,6 +44,7 @@ import requests
 from lxml import html
 from lxml import etree
 import re
+import subprocess
 
 def getPageContents(url):
     page = requests.get(url)
@@ -218,18 +219,24 @@ while i<len(sys.argv)-2:
     i+=1
 
 def iscePreProcess(bname,ss):
-    cmd = 'cd %s/%s ;' % (bname,ss)
+    cmd = 'cd %s/%s ; source activate isce; source ~/.isce/.isceenv;' % (bname,ss)
     cmd = cmd + 'topsApp.py --end=preprocess'
-    os.system(cmd)
+    print(cmd)
+    subprocess_cmd(cmd)
+
+def subprocess_cmd(command):
+    process = subprocess.Popen(command,stdout=subprocess.PIPE, shell=True,executable='/bin/bash')
+    proc_stdout = process.communicate()[0].strip()
+    print(proc_stdout)
 
 def isceCalibration(bname,ss):
     pass
 
 def isceProcess(bname,ss,step):
-    cmd = 'cd %s/%s ;' % (bname,ss)
+    cmd = 'cd %s/%s ; source activate isce; source ~/.isce/.isceenv;' % (bname,ss)
     cmd = cmd + 'topsApp.py %s' % step
     print(cmd)
-    os.system(cmd)
+    #subprocess_cmd(cmd)
 
 # g1 and g2 are the two granules that we are processing
 g1 = sys.argv[-2]
@@ -255,11 +262,11 @@ prepDirISCE(bname,ss)
 # Pull the orbit files and put them in the proper directory
 (orburl,f1) = getOrbFile(g1)
 cmd = 'cd %s/%s; wget %s' % (bname,ss,orburl)
-#os.system(cmd)
+os.system(cmd)
 
 (orburl,f2) = getOrbFile(g2)
 cmd = 'cd %s/%s; wget %s' % (bname,ss,orburl)
-#os.system(cmd)
+os.system(cmd)
 
 # Make sure ISCE is available
 t = os.system('which topsApp.py')
@@ -268,8 +275,6 @@ if t != 0:
 
 createISCEXML(g1,g2,f1,f2,options)
 
-
-sys.exit()
 # Process through preprocess
 iscePreProcess(bname,ss)
 
